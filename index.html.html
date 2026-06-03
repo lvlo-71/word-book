@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+<title>📖 单词本</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+}
+
+:root {
+  --bg-dark: #0f172a;
+  --bg-card: rgba(30, 41, 59, 0.7);
+  --text-light: #eef2ff;
+  --border-color: #334155;
+  --accent: #3b82f6;
+  --star-1: #ef4444;
+  --star-2: #f97316;
+  --star-3: #eab308;
+  --star-4: #3b82f6;
+  --star-5: #facc15;
+  --tag-study: #3b82f6;
+  --tag-work: #64748b;
+  --tag-life: #22c55e;
+  --tag-travel: #14b8a6;
+  --tag-tech: #a855f7;
+  --tag-emotion: #ef4444;
+  --tag-nature: #84cc16;
+  --tag-time: #f97316;
+  --tag-other: #6b7280;
+}
+
+body {
+  background: radial-gradient(circle at 10% 20%, #121826 0%, #090c0f 100%);
+  color: var(--text-light);
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+/* 夜间模式（保持不变） */
+body.light {
+  background: radial-gradient(circle at 10% 20%, #e0f2fe 0%, #bae6fd 100%);
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --text-light: #0f172a;
+  --border-color: #cbd5e1;
+}
+
+/* 日间模式下的输入框、卡片、发光特效优化 */
+body.light input,
+body.light select,
+body.light textarea {
+  background: #ffffff;
+  color: #1e293b;
+  border-color: #cbd5e1;
+}
+body.light input:focus,
+body.light select:focus,
+body.light textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+body.light .card,
+body.light .word-card,
+body.light .modal-content {
+  background: rgba(255, 255, 255, 0.9);
+  color: #0f172a;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+body.light .word-card:hover {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+body.light .card:hover {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  border-color: var(--accent);
+}
+body.light .word-phonetic {
+  color: #475569;
+}
+body.light .word-meaning {
+  color: #334155;
+}
+body.light .word-example-en {
+  color: #475569;
+}
+body.light .word-example-zh {
+  color: #64748b;
+}
+body.light .tag {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+body.light .toast {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: var(--accent);
+}
+body.light .modal-content {
+  background: rgba(255, 255, 255, 0.95);
+}
+body.light .modal-header {
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom-color: #e2e8f0;
+}
+body.light .choice-btn {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+body.light .choice-btn:hover {
+  background: var(--accent);
+  color: white;
+}
+body.light .batch-bar {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: var(--accent);
+}
+body.light .divider {
+  border-color: #e2e8f0;
+}
+body.light .speak-btn,
+body.light .speak-example-btn {
+  color: #334155;
+}
+body.light .speak-btn:hover,
+body.light .speak-example-btn:hover {
+  color: var(--accent);
+}
+
+.container {
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.card, .word-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  padding: 14px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.25s ease;
+  animation: fadeInUp 0.3s ease-out;
+}
+.card:hover, .word-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.2);
+  transform: translateY(-2px);
+  background: rgba(30, 41, 59, 0.85);
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+h1 {
+  font-size: 1.6rem;
+  margin-bottom: 14px;
+  text-align: center;
+  background: linear-gradient(135deg, #E0F2FE, #A5F3FC);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: fadeInUp 0.4s ease-out;
+}
+h2 {
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+  border-left: 3px solid var(--accent);
+  padding-left: 8px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+button, .review-btn {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 30px;
+  padding: 8px 12px;
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+button:active, .review-btn:active {
+  background: var(--accent);
+  transform: scale(0.96);
+}
+.btn-red { background: rgba(239,68,68,0.2); border-color:#ef4444; }
+.btn-red:active { background:#ef4444; }
+.btn-green { background: rgba(34,197,94,0.2); border-color:#22c55e; }
+.btn-green:active { background:#16a34a; }
+.btn-yellow { background: rgba(234,179,8,0.2); border-color:#eab308; }
+
+input, select, textarea {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 8px 10px;
+  color: var(--text-light);
+  font-size: 14px;
+  width: 100%;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.3);
+}
+
+.tag {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  background: #334155;
+  color: white;
+}
+.tag-study { background: var(--tag-study); }
+.tag-work { background: var(--tag-work); }
+.tag-life { background: var(--tag-life); }
+.tag-travel { background: var(--tag-travel); }
+.tag-tech { background: var(--tag-tech); }
+.tag-emotion { background: var(--tag-emotion); }
+.tag-nature { background: var(--tag-nature); }
+.tag-time { background: var(--tag-time); }
+.tag-other { background: var(--tag-other); }
+
+.word-main {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 8px;
+  position: relative;
+  word-break: break-word;
+}
+.word-phonetic {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  text-align: center;
+  margin-bottom: 8px;
+}
+.word-meaning {
+  color: #cbd5e1;
+  font-size: 1rem;
+  text-align: center;
+  margin-bottom: 16px;
+  white-space: pre-wrap;
+}
+.divider {
+  border-top: 1px dashed var(--border-color);
+  margin: 12px 0;
+}
+.word-example-en, .word-example-zh {
+  font-size: 0.88rem;
+  margin-bottom: 6px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.word-example-en {
+  color: #94a3b8;
+  font-style: italic;
+}
+.word-example-zh {
+  color: #64748b;
+}
+.word-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+.word-star {
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+}
+.speak-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.word-main { position: relative; }
+
+.card-checkbox {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  z-index: 10;
+  accent-color: var(--accent);
+}
+
+.choice-btn {
+  background: #2d3a5e;
+  width: 100%;
+  margin: 8px 0;
+  padding: 12px;
+  text-align: center;
+  border-radius: 16px;
+  font-size: 1rem;
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.choice-btn:hover {
+  background: var(--accent);
+}
+
+.batch-bar {
+  position: sticky;
+  bottom: 0;
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  padding: 12px;
+  border-radius: 20px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  border: 1px solid var(--accent);
+  justify-content: center;
+  z-index: 20;
+}
+.filter-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.filter-controls {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.quiz-count {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+}
+.quiz-count select { width: 70px; padding: 6px; }
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: 0.2s;
+  z-index: 1000;
+}
+.modal.show { opacity: 1; visibility: visible; }
+.modal-content {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border-radius: 24px;
+  width: 94%;
+  max-width: 700px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--accent);
+  animation: fadeInUp 0.25s ease-out;
+}
+.modal-header {
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  z-index: 10;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-radius: 24px 24px 0 0;
+}
+.modal-body {
+  overflow-y: auto;
+  padding: 16px;
+  flex: 1;
+}
+.modal-close {
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+}
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--accent);
+  border-radius: 40px;
+  padding: 8px 16px;
+  color: white;
+  font-size: 13px;
+  z-index: 1100;
+  animation: fadeOut 2s ease forwards;
+}
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.search-loading {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--accent);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>📖 单词本</h1>
+
+<div class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <button onclick="toggleTheme()">🌓 主题</button>
+      <button onclick="showStats()">📊 统计</button>
+      <div class="quiz-count">
+        <button onclick="startRandomQuiz()">🎲 抽查</button>
+        <select id="quizCount">
+          <option value="1">1个</option>
+          <option value="5" selected>5个</option>
+          <option value="10">10个</option>
+          <option value="20">20个</option>
+          <option value="30">30个</option>
+        </select>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 13px;">🔊 自动发音</span>
+      <input type="checkbox" id="autoSpeakCheckbox" style="width: 18px;">
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📦 数据管理</h2>
+  <div class="grid">
+    <button onclick="exportAllJSON()">📦 导出全部</button>
+    <button onclick="exportHardWords()">🎯 导出生词</button>
+    <button onclick="importJSONFile()">📂 导入JSON</button>
+    <button onclick="importTXTFile()">📄 导入TXT</button>
+    <button onclick="showRecycleBin()">🗑️ 回收站</button>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🔍 搜索单词</h2>
+  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+    <input type="text" id="searchInput" placeholder="英文或中文" style="flex:1;">
+    <button onclick="performSearch()">搜索</button>
+    <button onclick="clearSearch()" class="btn-yellow">清空</button>
+  </div>
+  <div style="font-size: 11px; margin-top: 4px;">💡 按回车搜索</div>
+  <div id="searchResults" style="margin-top: 10px;"></div>
+</div>
+
+<div class="card">
+  <h2>✍️ 添加单词</h2>
+  <div class="add-area" style="display: flex; flex-direction: column; gap: 10px;">
+    <div>
+      <input type="text" id="inputEng" placeholder="英文">
+      <div id="duplicateWarning" style="color:#f87171; font-size:11px; margin-top:3px; display:none;">⚠️ 单词已存在</div>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <input type="text" id="inputPhonetic" placeholder="音标" style="flex:2;">
+      <button onclick="fetchPhoneticOnly()" style="flex:1;">🔊 获取音标</button>
+    </div>
+    <textarea id="inputCn" placeholder="中文释义" rows="2"></textarea>
+    <textarea id="inputExampleEn" placeholder="英文例句" rows="2"></textarea>
+    <textarea id="inputExampleZh" placeholder="中文例句" rows="2"></textarea>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <select id="inputTag" style="flex:2;">
+        <option value="">-- 选择标签 --</option>
+        <option value="学习">📚 学习</option><option value="工作">💼 工作</option><option value="生活">🏠 生活</option>
+        <option value="旅行">✈️ 旅行</option><option value="科技">💻 科技</option><option value="情感">❤️ 情感</option>
+        <option value="自然">🌿 自然</option><option value="时间">⏰ 时间</option><option value="其他">📌 其他</option>
+      </select>
+      <input type="text" id="inputTagCustom" placeholder="或输入新标签" style="flex:1;">
+    </div>
+    <select id="inputStar">
+      <option value="5">★★★★★ (5星)</option><option value="4">★★★★☆ (4星)</option>
+      <option value="3" selected>★★★☆☆ (3星)</option><option value="2">★★☆☆☆ (2星)</option><option value="1">★☆☆☆☆ (1星)</option>
+    </select>
+    <div style="display: flex; gap: 8px;">
+      <button onclick="previewExample()" style="flex:1;">🔊 试听例句</button>
+      <button onclick="saveWord()" class="btn-green" style="flex:1;">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🧠 复习模式</h2>
+  <div class="grid">
+    <div class="review-btn" onclick="startReview('normal')">📖 翻看复习</div>
+    <div class="review-btn" onclick="startReview('choice')">📝 选择题刷题</div>
+    <div class="review-btn" onclick="startReview('random')">🎲 随机翻看</div>
+    <div class="review-btn" onclick="startReview('randomChoice')">🎯 随机刷题</div>
+    <div class="review-btn" onclick="startReview('errorReview')">📚 错题翻看</div>
+    <div class="review-btn" onclick="startReview('errorChoice')">⚠️ 错题刷题</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>⚠️ 错题本</h2>
+  <div class="grid">
+    <button onclick="showErrorList()">📋 查看错题</button>
+    <button onclick="clearErrors()" class="btn-red">🗑️ 清空错题</button>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📚 我的词库</h2>
+  <button onclick="showAllWords()" style="width:100%;">🔎 浏览/编辑词库</button>
+  <div id="todayStats" style="margin-top: 10px;"></div>
+</div>
+
+</div>
+
+<div id="modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="modalTitle" style="margin:0;">标题</h3>
+      <span class="modal-close" onclick="closeModal()">&times;</span>
+    </div>
+    <div id="modalBody" class="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ---------- 数据 ----------
+let wordDB = JSON.parse(localStorage.getItem('wordDB') || '[]');
+let errorDB = JSON.parse(localStorage.getItem('errorDB') || '[]');
+let recycleBin = JSON.parse(localStorage.getItem('recycleBin') || '[]');
+let hideStates = JSON.parse(localStorage.getItem('hideStates') || '{}');
+let settings = JSON.parse(localStorage.getItem('settings') || '{"autoSpeak":false,"theme":"dark"}');
+let checkInData = JSON.parse(localStorage.getItem('checkInData') || '{"lastDate":"","continuousDays":0}');
+let selectedWordsForBatch = new Set();
+let editMode = false;
+let currentStarFilter = 'all';
+let currentTagFilter = 'all';
+let recycleSelected = new Set();
+
+let randomQuizList = [];
+let randomQuizIndex = 0;
+
+function saveAll() {
+  localStorage.setItem('wordDB', JSON.stringify(wordDB));
+  localStorage.setItem('errorDB', JSON.stringify(errorDB));
+  localStorage.setItem('recycleBin', JSON.stringify(recycleBin));
+  localStorage.setItem('hideStates', JSON.stringify(hideStates));
+  localStorage.setItem('settings', JSON.stringify(settings));
+  localStorage.setItem('checkInData', JSON.stringify(checkInData));
+  applySettings(); updateTodayStats();
+}
+function showToast(msg) {
+  let t = document.createElement('div');
+  t.className = 'toast';
+  t.innerText = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2000);
+}
+function applySettings() {
+  if (settings.theme === 'light') document.body.classList.add('light');
+  else document.body.classList.remove('light');
+  let a = document.getElementById('autoSpeakCheckbox');
+  if (a) a.checked = settings.autoSpeak;
+}
+function toggleTheme() { settings.theme = settings.theme === 'dark' ? 'light' : 'dark'; saveAll(); }
+function updateCheckIn() {
+  let today = new Date().toISOString().slice(0,10);
+  if (checkInData.lastDate !== today) {
+    let yes = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+    checkInData.continuousDays = (checkInData.lastDate === yes) ? checkInData.continuousDays + 1 : 1;
+    checkInData.lastDate = today;
+    saveAll();
+  }
+}
+function updateTodayStats() {
+  let today = new Date().toISOString().slice(0,10);
+  let added = wordDB.filter(w => w.addDate === today).length;
+  document.getElementById('todayStats').innerHTML = `<div style="background:rgba(0,0,0,0.2); border-radius:10px; padding:6px 10px;"><div>📅 今日新增: ${added} 词</div><div>🔥 连续打卡: ${checkInData.continuousDays} 天</div><div>📚 总单词: ${wordDB.length}</div></div>`;
+}
+function getTagClass(tag) {
+  let m = {'学习':'tag-study','工作':'tag-work','生活':'tag-life','旅行':'tag-travel','科技':'tag-tech','情感':'tag-emotion','自然':'tag-nature','时间':'tag-time','其他':'tag-other'};
+  return m[tag] || 'tag-other';
+}
+function showStats() {
+  let starCount = {1:0,2:0,3:0,4:0,5:0};
+  let tagCount = {};
+  wordDB.forEach(w => {
+    starCount[w.star]++;
+    if (w.tag) tagCount[w.tag] = (tagCount[w.tag]||0)+1;
+    else tagCount['未分类'] = (tagCount['未分类']||0)+1;
+  });
+  let tagHtml = '<div style="margin-top:8px;"><strong>🏷️ 标签统计：</strong><br>';
+  for (let [t,c] of Object.entries(tagCount)) tagHtml += `<span class="tag ${getTagClass(t)}" style="margin:2px;">${t}: ${c}</span> `;
+  tagHtml += '</div>';
+  let html = `<div><div>📚 总单词数: ${wordDB.length}</div><div>⭐ 1-5星: ${starCount[1]} / ${starCount[2]} / ${starCount[3]} / ${starCount[4]} / ${starCount[5]}</div><div>🏆 掌握率: ${wordDB.length ? Math.round((starCount[4]+starCount[5])/wordDB.length*100) : 0}%</div><div>🔥 连续打卡: ${checkInData.continuousDays} 天</div>${tagHtml}</div>`;
+  showModalWithTitle('📊 学习统计', html);
+}
+
+async function fetchPhoneticOnly() {
+  let eng = document.getElementById('inputEng').value.trim();
+  if (!eng) { showToast('请输入英文'); return; }
+  showToast('获取音标中...');
+  try {
+    let res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(eng)}`);
+    if (!res.ok) throw new Error();
+    let data = await res.json();
+    let phonetic = data[0]?.phonetic || data[0]?.phonetics?.[0]?.text || '';
+    if (phonetic) { document.getElementById('inputPhonetic').value = phonetic; showToast('音标已获取'); }
+    else showToast('未找到音标');
+  } catch(e) { showToast('获取失败'); }
+}
+function previewExample() {
+  let ex = document.getElementById('inputExampleEn').value.trim();
+  if (!ex) { showToast('没有英文例句'); return; }
+  speakText(ex);
+}
+function speakText(t) { if (!t) return; let u = new SpeechSynthesisUtterance(t); u.lang = 'en-US'; speechSynthesis.cancel(); speechSynthesis.speak(u); }
+function speakExample(ex) { if (!ex) { showToast('无例句'); return; } speakText(ex); }
+function speakWordStatic(eng) { let u = new SpeechSynthesisUtterance(eng); u.lang = 'en-US'; speechSynthesis.cancel(); speechSynthesis.speak(u); }
+
+document.getElementById('inputEng').addEventListener('input', function() {
+  let eng = this.value.trim();
+  document.getElementById('duplicateWarning').style.display = (eng && wordDB.some(w => w.eng.toLowerCase() === eng.toLowerCase())) ? 'block' : 'none';
+});
+
+function performSearch() {
+  let kw = document.getElementById('searchInput').value.trim().toLowerCase();
+  let container = document.getElementById('searchResults');
+  if (!kw) { container.innerHTML = '<div style="padding:10px;">✨ 输入英文或中文</div>'; return; }
+  container.innerHTML = '<div><span class="search-loading"></span> 搜索中...</div>';
+  setTimeout(() => {
+    let filtered = wordDB.filter(w => w.eng.toLowerCase().includes(kw) || w.cn.toLowerCase().includes(kw));
+    if (!filtered.length) { container.innerHTML = `<div>😢 无匹配单词</div>`; return; }
+    container.innerHTML = `<div style="margin-bottom:6px;">🔍 找到 ${filtered.length} 个单词</div>` + filtered.map(w => renderWordCard(w)).join('');
+  }, 10);
+}
+function clearSearch() { document.getElementById('searchInput').value = ''; document.getElementById('searchResults').innerHTML = '<div style="padding:10px;">✨ 已清空</div>'; document.getElementById('searchInput').focus(); }
+document.getElementById('searchInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') performSearch(); });
+
+function getHideState(eng) {
+  if (!hideStates[eng]) hideStates[eng] = { word: false, phonetic: false, meaning: false, exampleEn: false, exampleZh: false, tag: false };
+  return hideStates[eng];
+}
+function toggleHide(eng, field) {
+  if (!hideStates[eng]) hideStates[eng] = { word: false, phonetic: false, meaning: false, exampleEn: false, exampleZh: false, tag: false };
+  hideStates[eng][field] = !hideStates[eng][field];
+  saveAll();
+  if (window.allWordsModalOpen) renderAllWordsModal();
+  if (window.errorListOpen) showErrorList();
+  performSearch();
+}
+
+// 原地编辑（带自适应高度）
+function startInlineEdit(element, currentText, saveCallback, placeholder) {
+  let input = document.createElement('textarea');
+  input.value = currentText;
+  input.placeholder = placeholder || '';
+  input.style.width = '100%';
+  input.style.padding = '8px';
+  input.style.background = 'var(--bg-card)';
+  input.style.color = 'var(--text-light)';
+  input.style.border = '1px solid var(--accent)';
+  input.style.borderRadius = '12px';
+  input.style.fontSize = '0.88rem';
+  input.style.fontFamily = 'inherit';
+  input.style.resize = 'vertical';
+  input.rows = Math.max(1, currentText.split('\n').length);
+  element.innerHTML = '';
+  element.appendChild(input);
+  input.focus();
+  input.select();
+  let done = () => {
+    let newVal = input.value.trim();
+    if (newVal !== currentText) saveCallback(newVal);
+    else if (newVal === '' && currentText === '') saveCallback('');
+    element.removeChild(input);
+    return false;
+  };
+  input.addEventListener('blur', done);
+  input.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); done(); } });
+  input.addEventListener('input', () => { input.rows = Math.max(1, input.value.split('\n').length); });
+}
+
+function editExampleEnInline(eng, el) {
+  let w = wordDB.find(w => w.eng === eng);
+  if (!w) return;
+  startInlineEdit(el, w.exampleEn || '', (nv) => {
+    w.exampleEn = nv;
+    saveAll();
+    if (nv) el.innerHTML = escapeHtml(nv);
+    else el.innerHTML = '<span style="color:#64748b;">(双击添加英文例句)</span>';
+    if (window.allWordsModalOpen) renderAllWordsModal();
+    performSearch();
+    showToast('英文例句已修改');
+  }, '输入英文例句');
+}
+function editExampleZhInline(eng, el) {
+  let w = wordDB.find(w => w.eng === eng);
+  if (!w) return;
+  startInlineEdit(el, w.exampleZh || '', (nv) => {
+    w.exampleZh = nv;
+    saveAll();
+    if (nv) el.innerHTML = escapeHtml(nv);
+    else el.innerHTML = '<span style="color:#64748b;">(双击添加中文例句)</span>';
+    if (window.allWordsModalOpen) renderAllWordsModal();
+    performSearch();
+    showToast('中文例句已修改');
+  }, '输入中文例句');
+}
+function editMeaningInline(eng, el) {
+  let w = wordDB.find(w => w.eng === eng);
+  if (!w) return;
+  startInlineEdit(el, w.cn, (nv) => { w.cn = nv; saveAll(); el.innerHTML = nv; if (window.allWordsModalOpen) renderAllWordsModal(); performSearch(); showToast('释义已修改'); }, '输入中文释义');
+}
+function editTagInline(eng, el) {
+  let w = wordDB.find(w => w.eng === eng);
+  if (!w) return;
+  startInlineEdit(el, w.tag || '', (nv) => {
+    w.tag = nv;
+    saveAll();
+    let span = document.createElement('span');
+    span.className = `tag ${getTagClass(nv)}`;
+    span.innerText = nv || '未分类';
+    el.innerHTML = '';
+    el.appendChild(span);
+    if (window.allWordsModalOpen) renderAllWordsModal();
+    performSearch();
+    showToast('标签已修改');
+  }, '输入标签');
+}
+
+function renderWordCard(w, showCheckbox = false, isSelected = false) {
+  let state = getHideState(w.eng);
+  let wordDisp = state.word ? '<span class="hidden-content">???</span>' : `<strong>${escapeHtml(w.eng)}</strong>`;
+  let phoneticDisp = state.phonetic ? '<span class="hidden-content">???</span>' : (w.phonetic ? `[${escapeHtml(w.phonetic)}]` : '');
+  let meaningDisp = state.meaning ? '<span class="hidden-content">???</span>' : escapeHtml(w.cn);
+  let enDisp = state.exampleEn ? '<span class="hidden-content">???</span>' : (w.exampleEn ? escapeHtml(w.exampleEn) : '<span style="color:#64748b;">(双击添加英文例句)</span>');
+  let zhDisp = state.exampleZh ? '<span class="hidden-content">???</span>' : (w.exampleZh ? escapeHtml(w.exampleZh) : '<span style="color:#64748b;">(双击添加中文例句)</span>');
+  let tag = w.tag || '未分类';
+  let tagDisp = state.tag ? '' : `<span class="tag ${getTagClass(tag)}">${tag === '未分类' ? '未分类' : tag}</span>`;
+  let starDisp = '★'.repeat(w.star) + '☆'.repeat(5-w.star);
+  return `
+    <div class="word-card star-${w.star}" data-eng="${escapeHtml(w.eng)}">
+      ${showCheckbox ? `<input type="checkbox" class="card-checkbox" data-eng="${escapeHtml(w.eng)}" ${isSelected ? 'checked' : ''} onchange="toggleSelectWord('${escapeHtml(w.eng)}')">` : ''}
+      <div class="word-main">
+        ${wordDisp}
+        <button class="speak-btn" onclick="speakWordStatic('${escapeHtml(w.eng)}')">🔊</button>
+      </div>
+      ${phoneticDisp ? `<div class="word-phonetic">${phoneticDisp}</div>` : '<div class="word-phonetic" style="color:#64748b;">(无音标)</div>'}
+      <div class="word-meaning" ondblclick="editMeaningInline('${escapeHtml(w.eng)}', this)">${meaningDisp}</div>
+      <div class="divider"></div>
+      <div class="word-example-en" ondblclick="editExampleEnInline('${escapeHtml(w.eng)}', this)">${enDisp}</div>
+      <div class="word-example-zh" ondblclick="editExampleZhInline('${escapeHtml(w.eng)}', this)">${zhDisp}</div>
+      <div class="word-footer">
+        <div class="word-tag" ondblclick="editTagInline('${escapeHtml(w.eng)}', this)">${tagDisp}</div>
+        <div class="word-star">${starDisp}</div>
+      </div>
+    </div>
+  `;
+}
+
+function saveWord() {
+  let eng = document.getElementById('inputEng').value.trim();
+  if (!eng) { showToast('英文不能为空'); return; }
+  let phonetic = document.getElementById('inputPhonetic').value.trim();
+  let cn = document.getElementById('inputCn').value.trim();
+  let en = document.getElementById('inputExampleEn').value.trim();
+  let zh = document.getElementById('inputExampleZh').value.trim();
+  let tag = document.getElementById('inputTagCustom').value.trim() || document.getElementById('inputTag').value;
+  let star = Number(document.getElementById('inputStar').value);
+  if (!cn) { showToast('请填写中文释义'); return; }
+  let idx = wordDB.findIndex(w => w.eng.toLowerCase() === eng.toLowerCase());
+  if (idx !== -1) {
+    if (confirm(`单词 "${eng}" 已存在，覆盖？`)) {
+      wordDB[idx] = { eng, phonetic, cn, exampleEn: en, exampleZh: zh, tag, star, addDate: wordDB[idx].addDate };
+      saveAll(); showToast(`✅ 已更新 ${eng}`);
+    }
+  } else {
+    wordDB.push({ eng, phonetic, cn, exampleEn: en, exampleZh: zh, tag, star, addDate: new Date().toISOString().slice(0,10) });
+    saveAll(); showToast(`✅ 添加成功 ${eng}`); updateCheckIn();
+  }
+  document.getElementById('inputEng').value = '';
+  document.getElementById('inputPhonetic').value = '';
+  document.getElementById('inputCn').value = '';
+  document.getElementById('inputExampleEn').value = '';
+  document.getElementById('inputExampleZh').value = '';
+  document.getElementById('inputTagCustom').value = '';
+  document.getElementById('inputTag').value = '';
+  document.getElementById('duplicateWarning').style.display = 'none';
+  document.getElementById('inputEng').focus();
+  performSearch(); updateTodayStats();
+}
+
+function deleteToRecycle(eng) {
+  let w = wordDB.find(w => w.eng === eng);
+  if (w) {
+    recycleBin.push({ ...w, deleteDate: new Date().toISOString() });
+    wordDB = wordDB.filter(w => w.eng !== eng);
+    errorDB = errorDB.filter(e => e.eng !== eng);
+    delete hideStates[eng];
+    saveAll();
+    showToast(`${eng} 已移至回收站`);
+    if (window.allWordsModalOpen) renderAllWordsModal();
+    performSearch();
+  }
+}
+
+// 抽查（一个一个，先只显示单词）
+function startRandomQuiz() {
+  if (wordDB.length === 0) { showToast('词库为空'); return; }
+  let cnt = parseInt(document.getElementById('quizCount').value);
+  randomQuizList = [...wordDB].sort(() => 0.5 - Math.random()).slice(0, Math.min(cnt, wordDB.length));
+  if (randomQuizList.length === 0) { showToast('没有单词'); return; }
+  randomQuizIndex = 0;
+  showRandomQuizCard();
+}
+function showRandomQuizCard() {
+  if (randomQuizIndex >= randomQuizList.length) {
+    showModalWithTitle('🎲 随机抽查', '<div style="text-align:center;"><h3>完成！</h3><button onclick="closeModal()">关闭</button></div>');
+    return;
+  }
+  let w = randomQuizList[randomQuizIndex];
+  let html = `
+    <div style="text-align:center;">
+      <div style="font-size:1.2rem; margin-bottom:12px; color:var(--accent);">第 ${randomQuizIndex+1} / ${randomQuizList.length} 个</div>
+      <div style="position:relative; display:inline-block;">
+        <div style="font-size:2rem; font-weight:bold;">${w.eng}</div>
+        <button class="speak-btn" style="position:absolute; right:-40px; top:50%; transform:translateY(-50%); background:none; border:none; font-size:1.2rem;" onclick="speakWordStatic('${escapeHtml(w.eng)}')">🔊</button>
+      </div>
+      <div id="quizMeaningArea" style="margin:16px 0; padding:12px; background:#1e293b; border-radius:16px; min-height:80px;">
+        <span style="color:#94a3b8;">??? 点击下方按钮显示释义</span>
+      </div>
+      <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+        <button onclick="revealQuizMeaning('${escapeHtml(w.cn)}', '${escapeHtml(w.exampleEn || '')}', '${escapeHtml(w.exampleZh || '')}')" class="btn-yellow">📖 显示释义</button>
+        <button onclick="answerRandomQuiz(true, '${escapeHtml(w.eng)}')" class="btn-green">✅ 知道</button>
+        <button onclick="answerRandomQuiz(false, '${escapeHtml(w.eng)}')" class="btn-red">❌ 不知道</button>
+        ${w.exampleEn ? `<button onclick="speakExample('${escapeHtml(w.exampleEn)}')" class="btn-yellow">📢 听例句</button>` : ''}
+      </div>
+      <div style="margin-top:20px;">
+        <button onclick="nextRandomQuiz()" class="btn-yellow">下一个 →</button>
+      </div>
+    </div>
+  `;
+  showModalWithTitle('🎲 随机抽查', html);
+}
+function revealQuizMeaning(meaning, enEx, zhEx) {
+  let area = document.getElementById('quizMeaningArea');
+  if (area) {
+    let txt = `<strong>📖 释义：</strong><br>${escapeHtml(meaning)}`;
+    if (enEx) txt += `<br><br><strong>📝 英文例句：</strong><br>${escapeHtml(enEx)}`;
+    if (zhEx) txt += `<br><strong>中文例句：</strong><br>${escapeHtml(zhEx)}`;
+    area.innerHTML = txt;
+  }
+}
+function answerRandomQuiz(know, eng) {
+  if (!know) { addToErrorList(eng); showToast(`已添加到错题本: ${eng}`); }
+  else showToast(`👍 继续加油！`);
+  nextRandomQuiz();
+}
+function nextRandomQuiz() {
+  randomQuizIndex++;
+  showRandomQuizCard();
+}
+
+// 我的词库
+function showAllWords() { window.allWordsModalOpen = true; editMode = false; selectedWordsForBatch.clear(); renderAllWordsModal(); }
+function toggleSelectWord(eng) {
+  if (selectedWordsForBatch.has(eng)) selectedWordsForBatch.delete(eng);
+  else selectedWordsForBatch.add(eng);
+  renderAllWordsModal();
+}
+function batchChangeStar(star) { if (!star) return; selectedWordsForBatch.forEach(eng => { let w = wordDB.find(w => w.eng === eng); if (w) w.star = star; }); saveAll(); showToast(`批量修改 ${selectedWordsForBatch.size} 个单词`); selectedWordsForBatch.clear(); renderAllWordsModal(); performSearch(); }
+function batchChangeTagCustom() {
+  let tag = document.getElementById('batchTagSelect').value;
+  if (tag === '__custom__') { tag = prompt('输入新标签名称：'); if (!tag) return; }
+  if (!tag) return;
+  selectedWordsForBatch.forEach(eng => { let w = wordDB.find(w => w.eng === eng); if (w) w.tag = tag; });
+  saveAll(); showToast(`批量修改标签 ${selectedWordsForBatch.size} 个单词`); selectedWordsForBatch.clear(); renderAllWordsModal(); performSearch();
+}
+function batchDeleteToRecycle() {
+  if (confirm(`删除 ${selectedWordsForBatch.size} 个单词？`)) {
+    selectedWordsForBatch.forEach(eng => {
+      let w = wordDB.find(w => w.eng === eng);
+      if (w) { recycleBin.push({ ...w, deleteDate: new Date().toISOString() }); wordDB = wordDB.filter(w => w.eng !== eng); errorDB = errorDB.filter(e => e.eng !== eng); delete hideStates[eng]; }
+    });
+    saveAll(); showToast(`已移动 ${selectedWordsForBatch.size} 个单词至回收站`); selectedWordsForBatch.clear(); renderAllWordsModal(); performSearch();
+  }
+}
+function selectAllWords() {
+  let filtered = wordDB;
+  if (currentStarFilter !== 'all') filtered = filtered.filter(w => w.star === Number(currentStarFilter));
+  if (currentTagFilter !== 'all') filtered = filtered.filter(w => (w.tag || '未分类') === currentTagFilter);
+  filtered.forEach(w => selectedWordsForBatch.add(w.eng));
+  renderAllWordsModal();
+}
+function deselectAllWords() { selectedWordsForBatch.clear(); renderAllWordsModal(); }
+function toggleEditMode() { editMode = !editMode; if (!editMode) selectedWordsForBatch.clear(); renderAllWordsModal(); }
+function renderAllWordsModal() {
+  if (!wordDB.length) { showModalWithTitle('📖 我的词库', '<div>暂无单词</div>'); return; }
+  let filtered = wordDB;
+  if (currentStarFilter !== 'all') filtered = filtered.filter(w => w.star === Number(currentStarFilter));
+  if (currentTagFilter !== 'all') filtered = filtered.filter(w => (w.tag || '未分类') === currentTagFilter);
+  let html = `<div class="filter-row">
+    <div class="filter-controls">
+      <select onchange="changeStarFilter(this.value)"><option value="all" ${currentStarFilter==='all'?'selected':''}>全部星级</option>${[1,2,3,4,5].map(s => `<option value="${s}" ${currentStarFilter===String(s)?'selected':''}>★${s}星</option>`).join('')}</select>
+      <select onchange="changeTagFilter(this.value)"><option value="all" ${currentTagFilter==='all'?'selected':''}>全部标签</option><option value="未分类" ${currentTagFilter==='未分类'?'selected':''}>未分类</option>${['学习','工作','生活','旅行','科技','情感','自然','时间','其他'].map(t => `<option value="${t}" ${currentTagFilter===t?'selected':''}>${t}</option>`).join('')}</select>
+    </div>
+    <div><button onclick="toggleEditMode()" class="${editMode ? 'btn-green' : 'btn-yellow'}">✏️ ${editMode ? '退出编辑' : '编辑模式'}</button></div>
+  </div>`;
+  if (editMode) html += `<div style="margin-bottom:12px;"><button onclick="selectAllWords()">全选</button> <button onclick="deselectAllWords()">取消</button></div>`;
+  filtered.forEach(w => { html += renderWordCard(w, editMode, selectedWordsForBatch.has(w.eng)); });
+  if (editMode && selectedWordsForBatch.size > 0) {
+    html += `<div class="batch-bar">
+      <span>✅ 已选 ${selectedWordsForBatch.size} 个单词</span>
+      <select id="batchStarSelect"><option value="">批量改星级</option>${[1,2,3,4,5].map(s => `<option value="${s}">★${s}</option>`).join('')}</select>
+      <button onclick="batchChangeStar(parseInt(document.getElementById('batchStarSelect').value))">应用</button>
+      <select id="batchTagSelect"><option value="">批量改标签</option><option value="未分类">未分类</option>${['学习','工作','生活','旅行','科技','情感','自然','时间','其他'].map(t => `<option value="${t}">${t}</option>`).join('')}<option value="__custom__">自定义</option></select>
+      <button onclick="batchChangeTagCustom()">应用</button>
+      <button onclick="batchDeleteToRecycle()" class="btn-red">批量删除</button>
+    </div>`;
+  }
+  showModalWithTitle('📖 我的词库', html);
+}
+function changeStarFilter(v) { currentStarFilter = v; renderAllWordsModal(); }
+function changeTagFilter(v) { currentTagFilter = v; renderAllWordsModal(); }
+
+// 错题本
+function addToErrorList(eng) { let e = errorDB.find(e=>e.eng===eng); if(e) e.wrongCount++; else errorDB.push({eng,wrongCount:1}); saveAll(); }
+function removeFromErrorList(eng) { errorDB = errorDB.filter(e=>e.eng!==eng); saveAll(); showErrorList(); }
+function clearErrors() { if (confirm('清空错题本？')) { errorDB = []; saveAll(); showToast('已清空'); if(modal.classList.contains('show')) closeModal(); } }
+function showErrorList() {
+  window.errorListOpen = true;
+  if (!errorDB.length) { showModalWithTitle('📕 错题本', '<div>📭 错题本为空</div>'); return; }
+  let sorted = [...errorDB].sort((a,b)=>(b.wrongCount||0)-(a.wrongCount||0));
+  let html = `<div>共 ${errorDB.length} 个错题</div>`;
+  sorted.forEach(err => {
+    let w = wordDB.find(w=>w.eng===err.eng);
+    if (!w) html += `<div class="word-card">⚠️ 已删除: ${err.eng} <button onclick="removeFromErrorList('${escapeHtml(err.eng)}')">移出</button></div>`;
+    else html += renderWordCard(w, false, false) + `<div style="margin-top:8px; text-align:right;"><span style="color:#f87171;">❌ 错误${err.wrongCount}次</span> <button onclick="removeFromErrorList('${escapeHtml(err.eng)}')">移出</button></div>`;
+  });
+  showModalWithTitle('📕 错题本', html);
+}
+
+// 回收站
+function showRecycleBin() {
+  recycleSelected.clear();
+  if (!recycleBin.length) { showModalWithTitle('🗑️ 回收站', '<div>📭 回收站为空</div>'); return; }
+  let html = `<div><button onclick="recycleSelectAll()">全选</button> <button onclick="recycleDeselectAll()">取消</button> <button onclick="recycleBatchRestore()" class="btn-green">批量恢复</button> <button onclick="recycleBatchDelete()" class="btn-red">批量彻底删除</button> <button onclick="emptyRecycleBin()" class="btn-red">清空回收站</button></div>`;
+  recycleBin.forEach((item, idx) => {
+    let sel = recycleSelected.has(idx);
+    html += `<div class="word-card"><div><input type="checkbox" ${sel ? 'checked' : ''} onchange="toggleRecycleSelect(${idx})"> <strong>${escapeHtml(item.eng)}</strong> — ${escapeHtml(item.cn)}</div><div><button onclick="restoreFromRecycle(${idx})">恢复</button> <button onclick="permanentDelete(${idx})">彻底删除</button></div></div>`;
+  });
+  showModalWithTitle('🗑️ 回收站', html);
+}
+function toggleRecycleSelect(idx) { if (recycleSelected.has(idx)) recycleSelected.delete(idx); else recycleSelected.add(idx); showRecycleBin(); }
+function recycleSelectAll() { recycleBin.forEach((_,idx)=>recycleSelected.add(idx)); showRecycleBin(); }
+function recycleDeselectAll() { recycleSelected.clear(); showRecycleBin(); }
+function recycleBatchRestore() { if (recycleSelected.size===0) { showToast('请先选择'); return; } let indices = Array.from(recycleSelected).sort((a,b)=>b-a); indices.forEach(i=>{ let it=recycleBin[i]; wordDB.push(it); recycleBin.splice(i,1); }); recycleSelected.clear(); saveAll(); showToast(`已恢复 ${indices.length} 个单词`); showRecycleBin(); performSearch(); }
+function recycleBatchDelete() { if (recycleSelected.size===0) { showToast('请先选择'); return; } if (confirm(`彻底删除 ${recycleSelected.size} 个单词？`)) { let indices = Array.from(recycleSelected).sort((a,b)=>b-a); indices.forEach(i=>recycleBin.splice(i,1)); recycleSelected.clear(); saveAll(); showToast(`已删除 ${indices.length} 个单词`); showRecycleBin(); } }
+function restoreFromRecycle(idx) { let it=recycleBin[idx]; wordDB.push(it); recycleBin.splice(idx,1); recycleSelected.clear(); saveAll(); showToast(`已恢复 ${it.eng}`); showRecycleBin(); performSearch(); }
+function permanentDelete(idx) { if (confirm('彻底删除？')) { recycleBin.splice(idx,1); recycleSelected.clear(); saveAll(); showToast('已删除'); showRecycleBin(); } }
+function emptyRecycleBin() { if (confirm('清空回收站？')) { recycleBin = []; recycleSelected.clear(); saveAll(); showToast('已清空'); showRecycleBin(); } }
+
+// 复习模式
+let review = { type:'', words:[], idx:0, score:0, total:0 };
+function startReview(type) {
+  let target = [];
+  if (type === 'normal') target = [...wordDB];
+  else if (type === 'choice') target = [...wordDB];
+  else if (type === 'random') target = [...wordDB].sort(()=>0.5-Math.random()).slice(0,Math.min(10,wordDB.length));
+  else if (type === 'randomChoice') target = [...wordDB].sort(()=>0.5-Math.random()).slice(0,Math.min(10,wordDB.length));
+  else if (type === 'errorReview') target = wordDB.filter(w=>errorDB.some(e=>e.eng===w.eng));
+  else if (type === 'errorChoice') target = wordDB.filter(w=>errorDB.some(e=>e.eng===w.eng));
+  if (!target.length) { showToast('没有单词'); return; }
+  review = { type, words: target, idx:0, score:0, total: target.length };
+  if (type.includes('Review') || type==='normal' || type==='random') renderFlipCard();
+  else renderChoice();
+}
+function renderFlipCard() {
+  if (review.idx >= review.total) { showModalWithTitle('🎉 复习完成', `<div><h3>完成！</h3><button onclick="closeModal()">关闭</button></div>`); return; }
+  let w = review.words[review.idx];
+  let html = `<div style="text-align:center;"><div style="font-size:2rem; font-weight:bold;">${w.eng}</div><div id="meaningBox" style="background:#1e293b; border-radius:14px; padding:14px; margin:14px 0; cursor:pointer;">??? 点击显示释义</div><div><button onclick="prevFlip()">◀</button> <button onclick="nextFlip()">▶</button> ${w.exampleEn ? `<button onclick="speakExample('${escapeHtml(w.exampleEn)}')">📢 例句</button>` : ''} <button onclick="closeModal()">退出</button></div><div>${review.idx+1}/${review.total}</div></div>`;
+  showModalWithTitle('📖 翻看复习', html);
+  let box = document.getElementById('meaningBox');
+  if (box) box.onclick = () => { let c = `<strong>释义：</strong><br>${escapeHtml(w.cn)}`; if (w.exampleEn) c += `<br><br><strong>例句：</strong><br>${escapeHtml(w.exampleEn)}`; if (w.exampleZh) c += `<br>${escapeHtml(w.exampleZh)}`; box.innerHTML = c; if (settings.autoSpeak) speakWordStatic(w.eng); };
+}
+function prevFlip() { if (review.idx > 0) { review.idx--; renderFlipCard(); } }
+function nextFlip() { review.idx++; renderFlipCard(); }
+function renderChoice() {
+  if (review.idx >= review.total) { let p = Math.round(review.score/review.total*100); showModalWithTitle('📊 完成', `<div><p>正确 ${review.score}/${review.total} (${p}%)</p><button onclick="closeModal()">关闭</button></div>`); return; }
+  let w = review.words[review.idx];
+  let opts = new Set([w.cn]);
+  let pool = wordDB.filter(v=>v.eng!==w.eng && v.cn);
+  while (opts.size<4 && pool.length) { let r = pool[Math.floor(Math.random()*pool.length)]; if(r.cn) opts.add(r.cn); pool.splice(pool.indexOf(r),1); }
+  if (opts.size<4) opts.add('待补充');
+  let options = Array.from(opts).sort(()=>Math.random()-0.5);
+  let html = `<div style="text-align:center;"><div style="font-size:1.6rem; font-weight:bold;">${w.eng}</div><div><button onclick="speakWordStatic('${escapeHtml(w.eng)}')">🔊 读词</button> ${w.exampleEn ? `<button onclick="speakExample('${escapeHtml(w.exampleEn)}')">📢 例句</button>` : ''}</div>${options.map(opt=>`<button class="choice-btn" onclick="checkChoice('${escapeHtml(opt)}','${escapeHtml(w.cn)}','${w.eng}')">${escapeHtml(opt)}</button>`).join('')}<div><button onclick="closeModal()">退出</button></div><div>${review.idx+1}/${review.total}</div></div>`;
+  showModalWithTitle('📝 选择题', html);
+}
+function checkChoice(selected,correct,eng) { let ok = (selected===correct); if(ok) review.score++; else addToErrorList(eng); let fb = ok ? '<div>✅ 正确</div>' : `<div>❌ 错误，答案：${correct}</div>`; document.getElementById('modalBody').innerHTML += fb; setTimeout(()=>{ review.idx++; renderChoice(); },800); }
+
+function exportAllJSON() { downloadFile(JSON.stringify(wordDB,null,2), `单词_${new Date().toISOString().slice(0,10)}.json`); }
+function exportHardWords() { let h = wordDB.filter(w=>w.star<=2); if(h.length) downloadFile(JSON.stringify(h), `生词_${new Date().toISOString().slice(0,10)}.json`); else showToast('无生词'); }
+function downloadFile(c,n) { let a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([c],{type:'application/json'})); a.download=n; a.click(); }
+function importJSONFile() { importFile('application/json', json=>{ if(Array.isArray(json)) mergeWords(json); else alert('无效JSON'); }); }
+function importTXTFile() { importFile('text/plain', txt=>{ let lines=txt.split(/\r?\n/); let newWords=[]; for(let line of lines){ let parts=line.trim().split(/\s+/); if(parts[0]) newWords.push({eng:parts[0], cn:parts.slice(1).join(' ')||'待补充', phonetic:'', exampleEn:'', exampleZh:'', tag:'', star:3, addDate:new Date().toISOString().slice(0,10)}); } mergeWords(newWords); showToast(`导入 ${newWords.length} 个单词`); }); }
+function importFile(accept,cb) { let inp=document.createElement('input'); inp.type='file'; inp.accept=accept; inp.onchange=e=>{ let f=e.target.files[0]; if(!f) return; let r=new FileReader(); r.onload=ev=>{ localStorage.setItem('auto_backup',JSON.stringify(wordDB)); if(accept.includes('json')) cb(JSON.parse(ev.target.result)); else cb(ev.target.result); showToast('已备份原词库'); }; r.readAsText(f); }; inp.click(); }
+function mergeWords(arr) { for(let nw of arr){ let idx=wordDB.findIndex(w=>w.eng.toLowerCase()===nw.eng.toLowerCase()); if(idx!==-1) wordDB[idx]={...wordDB[idx], ...nw}; else wordDB.push(nw); } saveAll(); performSearch(); if(window.allWordsModalOpen) renderAllWordsModal(); showToast(`导入完成`); }
+
+function showModalWithTitle(title,html) { document.getElementById('modalTitle').innerText = title; document.getElementById('modalBody').innerHTML = html; modal.classList.add('show'); }
+function closeModal() { modal.classList.remove('show'); window.allWordsModalOpen=false; window.errorListOpen=false; review={}; selectedWordsForBatch.clear(); recycleSelected.clear(); }
+function escapeHtml(s) { if(!s) return ''; return s.replace(/[&<>]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); }
+
+window.onload = () => {
+  applySettings(); updateTodayStats();
+  if (!wordDB.length) wordDB.push({ eng:"serendipity", phonetic:"/ˌser.ənˈdɪp.ə.ti/", cn:"意外发现珍奇事物的本领", exampleEn:"Finding the book was a serendipity.", exampleZh:"找到这本书是一个意外的惊喜。", tag:"生活", star:4, addDate:new Date().toISOString().slice(0,10) });
+  saveAll();
+  performSearch(); document.getElementById('inputEng').focus();
+  document.getElementById('autoSpeakCheckbox').addEventListener('change', (e) => { settings.autoSpeak = e.target.checked; saveAll(); });
+};
+</script>
+</body>
+</html>
